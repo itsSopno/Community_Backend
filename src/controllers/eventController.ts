@@ -91,11 +91,13 @@ export const updateEvent = asyncHandler(async (req: Request, res: Response): Pro
     const allowedFields = [
         'title', 'description', 'date', 'location', 'category',
         'maxCapacity', 'requiredSkills', 'registrationDeadline', 'status', 'image',
-    ];
+    ] as const;
 
-    allowedFields.forEach((field) => {
+    type AllowedField = typeof allowedFields[number];
+    allowedFields.forEach((field: AllowedField) => {
         if (req.body[field] !== undefined) {
-            (event as Record<string, unknown>)[field] = req.body[field];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (event as any)[field] = req.body[field];
         }
     });
 
