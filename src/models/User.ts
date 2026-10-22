@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-export type UserRole = 'organizer' | 'volunteer';
+export type UserRole = 'organizer' | 'volunteer' | 'public';
 
 export interface IUser extends Document {
     name: string;
@@ -12,6 +12,9 @@ export interface IUser extends Document {
     skills?: string[];
     interests?: string[];
     avatar?: string;
+    location?: string;
+    phone?: string;
+    profileCompleted: boolean;
     createdAt: Date;
     updatedAt: Date;
     comparePassword(candidatePassword: string): Promise<boolean>;
@@ -42,8 +45,8 @@ const userSchema = new Schema<IUser>(
         },
         role: {
             type: String,
-            enum: ['organizer', 'volunteer'],
-            default: 'volunteer',
+            enum: ['organizer', 'volunteer', 'public'],
+            default: 'public',
         },
         bio: {
             type: String,
@@ -52,6 +55,12 @@ const userSchema = new Schema<IUser>(
         skills: [{ type: String, trim: true }],
         interests: [{ type: String, trim: true }],
         avatar: { type: String },
+        location: { type: String, trim: true },
+        phone: { type: String, trim: true },
+        profileCompleted: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );

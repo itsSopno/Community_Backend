@@ -5,16 +5,12 @@ import { asyncHandler, sendSuccess, sendError } from '../utils/response';
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 export const register = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
         sendError(res, 'Name, email, and password are required.', 400);
         return;
     }
-
-    // Prevent invalid role injection
-    const allowedRoles = ['organizer', 'volunteer'];
-    const userRole = allowedRoles.includes(role) ? role : 'volunteer';
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -22,7 +18,8 @@ export const register = asyncHandler(async (req: Request, res: Response): Promis
         return;
     }
 
-    const user = await User.create({ name, email, password, role: userRole });
+    // New users start as 'public' until they complete their profile
+    const user = await User.create({ name, email, password, role: 'public', profileCompleted: false });
 
     const token = signToken({ userId: user._id.toString(), role: user.role });
 
@@ -35,6 +32,7 @@ export const register = asyncHandler(async (req: Request, res: Response): Promis
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                profileCompleted: user.profileCompleted,
             },
         },
         'Registration successful',
@@ -72,6 +70,7 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
             name: user.name,
             email: user.email,
             role: user.role,
+            profileCompleted: user.profileCompleted,
         },
     });
 });
@@ -84,6 +83,51 @@ export const getMe = asyncHandler(async (req: Request, res: Response): Promise<v
         return;
     }
     sendSuccess(res, user);
+});
+
+// ─── Complete Profile ─────────────────────────────────────────────────────────
+export const completeProfile = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { role, bio, skills, interests, avatar, location, phone } = req.body;
+
+    const allowedRoles = ['organizer', 'volunteer', 'public'];
+    if (!role || !allowedRoles.includes(role)) {
+        sendError(res, 'A valid role is required (public, volunteer, organizer).', 400);
+        return;
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user!._id,
+        {
+            role,
+            bio,
+            skills: Array.isArray(skills) ? skills : skills?.split(',').map((s: string) => s.trim()).filter(Boolean),
+            interests: Array.isArray(interests) ? interests : interests?.split(',').map((s: string) => s.trim()).filter(Boolean),
+            avatar,
+            location,
+            phone,
+            profileCompleted: true,
+        },
+        { new: true, runValidators: true }
+    );
+
+    if (!user) {
+        sendError(res, 'User not found.', 404);
+        return;
+    }
+
+    // Re-issue token with updated role
+    const token = signToken({ userId: user._id.toString(), role: user.role });
+
+    sendSuccess(res, {
+        token,
+        user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            profileCompleted: user.profileCompleted,
+        },
+    }, 'Profile completed successfully');
 });
 
 // ─── Update Profile ───────────────────────────────────────────────────────────
