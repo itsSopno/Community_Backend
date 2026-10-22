@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec tsx src/server.ts",
     "build": "tsc",
+    "build:prod": "npm install --include=dev && tsc",
     "start": "node dist/server.js",
     "type-check": "tsc --noEmit"
   },
