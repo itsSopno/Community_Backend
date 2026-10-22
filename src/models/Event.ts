@@ -10,6 +10,14 @@ export type EventCategory =
     | 'arts'
     | 'food'
     | 'technology'
+    | 'hackathon'
+    | 'workshop'
+    | 'meetup'
+    | 'webinar'
+    | 'conference'
+    | 'bootcamp'
+    | 'competition'
+    | 'volunteering'
     | 'other';
 
 export interface IEvent extends Document {
@@ -56,7 +64,7 @@ const eventSchema = new Schema<IEvent>(
         },
         category: {
             type: String,
-            enum: ['environment', 'education', 'health', 'community', 'sports', 'arts', 'food', 'technology', 'other'],
+            enum: ['environment', 'education', 'health', 'community', 'sports', 'arts', 'food', 'technology', 'hackathon', 'workshop', 'meetup', 'webinar', 'conference', 'bootcamp', 'competition', 'volunteering', 'other'],
             required: [true, 'Event category is required'],
         },
         maxCapacity: {
